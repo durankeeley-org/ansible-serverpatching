@@ -1,0 +1,17 @@
+- name: Find VM by name and get its ID
+  set_fact:
+    vmID: "{{ item.id }}"
+  loop: "{{ vm_list_response.json }}"
+  when: "item.name == vm_name"
+  no_log: true  # Use no_log to avoid sensitive data exposure
+
+- name: Take a snapshot
+  uri:
+    url: "{{ base_url }}/api/virtualresource/snapshotcreate/"
+    method: POST
+    body_format: json
+    headers: "{{ headers }}"
+    body: 
+      VirtualResourceId: "{{ vmID }}"
+      Name: "{{ snapshot_name }}"
+  register: snapshot_response

@@ -1,0 +1,19 @@
+steps:
+- script: |
+    /tmp/docker exec -t -u root ansible mv /etc/sudoers /etc/sudoers.bak
+    /tmp/docker exec -t -u root ansible apt-get -qq update
+    /tmp/docker exec -t -u root ansible apt-get -qq install sudo
+    /tmp/docker exec -t -u root ansible mv /etc/sudoers.bak /etc/sudoers
+  displayName: 'Install sudo inside the container'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      export DEBIAN_FRONTEND=noninteractive
+      sudo -E apt install -y python3-pip python3-kerberos python3-dev libkrb5-dev krb5-user iputils-ping
+      sudo rm /usr/lib/python3.*/EXTERNALLY-MANAGED
+      python3 -m pip install --user ansible
+      pip install pywinrm[kerberos]
+      echo "export PATH=$PATH:/home/$USER/.local/bin" >> ~/.bashrc
+      . ~/.profile
+  displayName: 'Install Ansible'

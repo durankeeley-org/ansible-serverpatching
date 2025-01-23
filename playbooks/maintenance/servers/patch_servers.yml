@@ -1,0 +1,13 @@
+---
+- name: Download Windows updates
+  hosts: windows_manual_patching
+  tasks:
+  - name: Search, download and install Windows updates
+    # throttle: 1
+    ansible.windows.win_updates:
+      server_selection: "windows_update"
+      category_names: '*'
+      state: installed
+      reboot: false
+      log_path: C:\temp\ansible_wu.txt
+    register: update_results

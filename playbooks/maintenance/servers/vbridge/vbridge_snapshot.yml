@@ -1,0 +1,47 @@
+- name: Take snapshots of virtual machines
+  hosts: localhost
+  gather_facts: no
+  vars:
+    snapshot_name: "This is from Ansible"
+    base_url: "https://api.mycloudspace.co.nz"
+    clientId: 10319
+
+  tasks:
+    - name: Set header for API calls
+      set_fact:
+        headers:
+          Authorization: "apiKey {{ vbridge_apikey }}"
+          x-mcs-user: "{{ vbridge_username }}"
+
+    - name: Get list of virtual machines from the API
+      uri:
+        url: "{{ base_url }}/api/client/virtualresources/{{ clientId }}"
+        method: GET 
+        headers: "{{ headers }}"
+        return_content: yes
+        status_code: 200
+        validate_certs: no
+      register: vm_list_response
+
+    - name: Extract short hostnames from windows_manual_patching group
+      set_fact:
+        vm_names_to_snapshot: "{{ groups['windows_manual_patching'] | map('split', '.') | map('first') | list }}"
+
+    - name: Build list of VMs to snapshot
+      set_fact:
+        vms_to_snapshot: "{{ vm_list_response.json | selectattr('name', 'in', vm_names_to_snapshot) | list }}"
+
+    - name: Take snapshot of each VM
+      uri:
+        url: "{{ base_url }}/api/virtualresource/snapshotcreate/"
+        method: POST
+        body_format: json
+        headers: "{{ headers }}"
+        body: 
+          VirtualResourceId: "{{ item.id }}"
+          Name: "{{ snapshot_name }}"
+        validate_certs: no
+      loop: "{{ vms_to_snapshot }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: snapshot_response

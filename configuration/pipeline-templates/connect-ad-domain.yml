@@ -1,0 +1,11 @@
+steps:
+- script: |
+    sudo cp ./configuration/kerberos/krb5.conf /etc/krb5.conf
+  displayName: 'Connect to AD Domain'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      ping -c 5 DC.ad.domain.local
+      ping -c 5 ADMIN.ad.domain.local
+  displayName: 'DNS test to AD Domain'
